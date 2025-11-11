@@ -1,0 +1,228 @@
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+const checklistItems = [
+  { key: 'vehicle_documents', label: 'Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)' },
+  { key: 'driver_fit_dl', label: 'Driver Fit for Working & Their DL' },
+  { key: 'body_condition', label: 'Vehicle Body Condition' },
+  { key: 'gear_condition', label: 'Vehicle Gear Condition' },
+  { key: 'tyre_condition', label: 'Vehicle Tyre and Rim Condition Or Spare Tyre' },
+  { key: 'head_light', label: 'Head Light' },
+  { key: 'indicators', label: 'Indicators' },
+  { key: 'break_light', label: 'Break Light' },
+  { key: 'wind_shield', label: 'Wind Shield' },
+  { key: 'wiper', label: 'Wiper (Both Side Working)' },
+  { key: 'mirrors', label: 'Rear View & Blind Spot Mirrors (Check for Clear Visibility)' },
+  { key: 'horn', label: 'Horn & Reverse Horn (Working Condition)' },
+  { key: 'first_aid_kit', label: 'Basic First aid Kit' },
+  { key: 'fire_extinguisher', label: 'Fire Extinguisher' },
+  { key: 'reflective_tape', label: 'Reflective Tape & Breakdown Safety Triangle' },
+  { key: 'rupd', label: 'RUPD (Rear Under Protection Device)' },
+  { key: 'supd', label: 'SUPD (Side Under Protection Device)' },
+  { key: 'seat_belt', label: 'Seat Belt (Both Side)' },
+  { key: 'gps_device', label: 'GPS Device' },
+  { key: 'speed_governor', label: 'Speed Governor (Speed Controller)' },
+  { key: 'brake_condition', label: 'Brake Condition, Hand Brake or Wheel Chocks' },
+  { key: 'rear_sensor_Rear_camera', label: 'Rear Sensor & Rear Camera' },
+  { key: 'steering_condition', label: 'Steering Wheel Looseness, Damage' },
+  { key: 'products_stored', label: 'Products Stored Securely' },
+  { key: 'walk_around', label: '360 Degree Walk Around' },
+  { key: 'empty_bucket', label: 'Other (Empty Bucket For Spillage Control)' }
+];
+
+const schema = yup.object().shape({
+  docket_no: yup.string().required('Required'),
+  truck_number: yup.string().required('Required'),
+  vehicle_type: yup.string().required('Required'),
+  dmc_in_datetime: yup.string().required('Required'),
+  dmc_out_datetime: yup.string().required('Required'),
+  checklist: yup.array().of(
+    yup.object().shape({
+      response: yup.string().required('Required'),
+      remark: yup.string()
+    })
+  ),
+  driver_declaration: yup.bool().oneOf([true], 'Required')
+});
+
+function VehicleInspectionForm() {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      checklist: checklistItems.map(() => ({ response: '', remark: '' })),
+      driver_declaration: false
+    }
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      // convert checklist array into object key-value pairs for database
+      const checklistData = {};
+      checklistItems.forEach((item, i) => {
+        checklistData[item.key] = data.checklist[i].response;
+        checklistData[`${item.key}_remark`] = data.checklist[i].remark;
+      });
+
+      const payload = {
+        docket_no: data.docket_no,
+        dmc_in_datetime: data.dmc_in_datetime,
+        dmc_out_datetime: data.dmc_out_datetime,
+        truck_number: data.truck_number,
+        vehicle_type: data.vehicle_type,
+        transporter: data.transporter,
+        driver_safety_induction: data.driver_safety_induction,
+        driver_counselling: data.driver_counselling,
+        ...checklistData,
+        driver_declaration: data.driver_declaration,
+        driver_name: data.driver_name,
+        driver_contact_no: data.driver_contact_no,
+        driver_dl_no: data.driver_dl_no,
+        dl_valid_till: data.dl_valid_till,
+        ddt_date: data.ddt_date,
+        ddt_card_by: data.ddt_card_by,
+        driver_sig: data.driver_sig,
+        inspected_by: data.inspected_by
+      };
+
+      const res = await fetch('http://localhost:3456/submit-inspection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        alert('✅ Form submitted successfully!');
+        reset();
+      } else {
+        alert(`⚠️ Submission failed: ${result.message}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Network error.');
+    }
+  };
+
+  return (
+    <div className="container py-4" style={{ border: '1.5px solid black' }}>
+      <div className="text-center mb-3">
+        <h4>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata (Mathura)</h4>
+        <small>Revision No. 02 | BAIL-S-155-01-01-00-07</small>
+        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST - Dedicated</h5>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Info Table */}
+        <table className="table table-bordered">
+          <tbody>
+            <tr>
+              <td>Docket No.</td>
+              <td><input className="form-control" {...register('docket_no')} /></td>
+              <td>DMC In Date & Time</td>
+              <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} /></td>
+            </tr>
+            <tr>
+              <td>Truck Number</td>
+              <td><input className="form-control" {...register('truck_number')} /></td>
+              <td>DMC Out Date & Time</td>
+              <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} /></td>
+            </tr>
+            <tr>
+              <td>Vehicle Type</td>
+              <td><input className="form-control" {...register('vehicle_type')} /></td>
+              <td>Driver Safety Induction</td>
+              <td><input className="form-control" {...register('driver_safety_induction')} /></td>
+            </tr>
+            <tr>
+              <td>Transporter</td>
+              <td><input className="form-control" {...register('transporter')} /></td>
+              <td>Driver Counselling</td>
+              <td><input className="form-control" {...register('driver_counselling')} /></td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Checklist */}
+        <table className="table table-bordered table-striped" style={{ border: '2px solid black' }}>
+          <thead className="table-dark">
+            <tr>
+              <th>Sr. No.</th>
+              <th>Checklist Description</th>
+              <th>Response</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {checklistItems.map((item, i) => (
+              <tr key={item.key}>
+                <td>{i + 1}</td>
+                <td>{item.label}</td>
+                <td>
+                  <select className="form-select" {...register(`checklist.${i}.response`)}>
+                    <option value="">Select</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                  {errors.checklist?.[i]?.response && <small className="text-danger">Required</small>}
+                </td>
+                <td>
+                  <input className="form-control" {...register(`checklist.${i}.remark`)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Declaration */}
+        <div className="my-3">
+          <p><strong>Driver Declaration:</strong> मैं यह घोषणा करता हूँ कि मैं कोई शराब या नशीली दवा नहीं पी है। मैंने वाहन की जांच की है और वह पूरी तरह से सुरक्षित है...</p>
+          <div className="form-check">
+            <input type="checkbox" className="form-check-input" {...register('driver_declaration')} />
+            <label className="form-check-label">मैं सहमत हूँ</label>
+            {errors.driver_declaration && <small className="text-danger d-block">Required</small>}
+          </div>
+        </div>
+
+        {/* Signatures */}
+        <table className="table table-bordered" style={{ border: '2px solid black' }}>
+          <tbody>
+            <tr>
+              <td>Driver Name</td>
+              <td><input className="form-control" {...register('driver_name')} /></td>
+              <td>Driver Contact No.</td>
+              <td><input className="form-control" {...register('driver_contact_no')} /></td>
+            </tr>
+            <tr>
+              <td>Driver DL No.</td>
+              <td><input className="form-control" {...register('driver_dl_no')} /></td>
+              <td>DL Valid Till</td>
+              <td><input type="date" className="form-control" {...register('dl_valid_till')} /></td>
+            </tr>
+            <tr>
+              <td>DDT Date</td>
+              <td><input type="date" className="form-control" {...register('ddt_date')} /></td>
+              <td>DDT Card</td>
+              <td><input className="form-control" {...register('ddt_card_by')} /></td>
+            </tr>
+            <tr>
+              <td>Driver Sign.</td>
+              <td><input className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
+              <td>Inspected By</td>
+              <td><input className="form-control" {...register('inspected_by')} /></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="text-center my-3">
+          <button type="submit" className="btn btn-primary me-2">Submit</button>
+          <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default VehicleInspectionForm;
