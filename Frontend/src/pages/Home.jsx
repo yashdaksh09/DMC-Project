@@ -19,9 +19,9 @@ function Home() {
           <p>For company-owned vehicles</p>
         </div>
 
-        <div className="home-card" onClick={() => navigate("/dedicated-vehicle")}>
-          <h3>DEDICATED VEHICLE INSPECTION</h3>
-          <p>For dedicated transporters</p>
+        <div className="home-card" onClick={() => navigate("/spotHired_Vehicle")}>
+          <h3>Inspection Checklist- Spot Hired Vehicle Form</h3>
+          <p>For Spot Hired Vehicle</p>
         </div>
 
         <div className="home-card" onClick={() => navigate("/reports")}>
