@@ -119,27 +119,27 @@ function VehicleInspectionForm() {
           <tbody>
             <tr>
               <td>Docket No.</td>
-              <td><input className="form-control" {...register('docket_no')} /></td>
+              <td><textarea className="form-control" {...register('docket_no')} /></td>
               <td>DMC In Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} /></td>
             </tr>
             <tr>
               <td>Truck Number</td>
-              <td><input className="form-control" {...register('truck_number')} /></td>
+              <td><textarea className="form-control" {...register('truck_number')} /></td>
               <td>DMC Out Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} /></td>
             </tr>
             <tr>
               <td>Vehicle Type</td>
-              <td><input className="form-control" {...register('vehicle_type')} /></td>
+              <td><textarea className="form-control" {...register('vehicle_type')} /></td>
               <td>Driver Safety Induction</td>
-              <td><input className="form-control" {...register('driver_safety_induction')} /></td>
+              <td><textarea className="form-control" {...register('driver_safety_induction')} /></td>
             </tr>
             <tr>
               <td>Transporter</td>
-              <td><input className="form-control" {...register('transporter')} /></td>
+              <td><textarea className="form-control" {...register('transporter')} /></td>
               <td>Driver Counselling</td>
-              <td><input className="form-control" {...register('driver_counselling')} /></td>
+              <td><textarea className="form-control" {...register('driver_counselling')} /></td>
             </tr>
           </tbody>
         </table>
@@ -169,7 +169,7 @@ function VehicleInspectionForm() {
                   {errors.checklist?.[i]?.response && <small className="text-danger">Required</small>}
                 </td>
                 <td>
-                  <input className="form-control" {...register(`checklist.${i}.remark`)} />
+                  <textarea className="form-control" {...register(`checklist.${i}.remark`)} />
                 </td>
               </tr>
             ))}
@@ -187,17 +187,17 @@ function VehicleInspectionForm() {
         </div>
 
         {/* Signatures */}
-        <table className="table table-bordered" style={{ border: '2px solid black' }}>
+        <table className=" w-full table table-bordered" style={{ border: '2px solid black' }}>
           <tbody>
             <tr>
               <td>Driver Name</td>
-              <td><input className="form-control" {...register('driver_name')} /></td>
+              <td><textarea className="form-control" {...register('driver_name')} /></td>
               <td>Driver Contact No.</td>
-              <td><input className="form-control" {...register('driver_contact_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_contact_no')} /></td>
             </tr>
             <tr>
               <td>Driver DL No.</td>
-              <td><input className="form-control" {...register('driver_dl_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_dl_no')} /></td>
               <td>DL Valid Till</td>
               <td><input type="date" className="form-control" {...register('dl_valid_till')} /></td>
             </tr>
@@ -205,16 +205,69 @@ function VehicleInspectionForm() {
               <td>DDT Date</td>
               <td><input type="date" className="form-control" {...register('ddt_date')} /></td>
               <td>DDT Card</td>
-              <td><input className="form-control" {...register('ddt_card_by')} /></td>
+              <td><textarea className="form-control" {...register('ddt_card_by')} /></td>
             </tr>
             <tr>
               <td>Driver Sign.</td>
-              <td><input className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
+              <td><textarea className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
               <td>Inspected By</td>
-              <td><input className="form-control" {...register('inspected_by')} /></td>
+              <td><textarea className="form-control" {...register('inspected_by')} /></td>
             </tr>
           </tbody>
         </table>
+        <table className="w-full border border-black border-collapse">
+  <tbody>
+  </tbody>
+</table>
+<table className="table table-bordered w-100" style={{ border: "2px solid black" }}>
+  <tbody>
+    <tr>
+      {/* LEFT CELL */}
+      <td style={{ width: "30%", textAlign: "left" }}>
+        <p >Prepared By :</p>
+        <textarea style={{width:"20rem"}}
+          type="text"
+          className="form-control mt-1"
+        />
+      </td>
+
+      {/* RIGHT CELL */}
+      <td style={{ width: "50%" }}>
+        <p>Transport Incharge</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style={{ width: "30%", textAlign: "left" }}>
+        <p>Approved By :</p>
+        <textarea style={{width:"20rem"}}
+          type="text"
+          className="form-control mt-1"
+        />
+      </td>
+
+      <td>
+        <p>General Manager</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style={{ width: "30%", textAlign: "left" }}>
+        <p>Revision Date :</p>
+        <input style={{width:"20rem"}}
+          type="date"
+          className="form-control mt-1"
+        />
+      </td>
+
+      <td>
+        <p>CLASSIFIED • CONFIDENTIAL • FOR INTERNAL USE ONLY</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+            
 
         <div className="text-center my-3">
           <button type="submit" className="btn btn-primary me-2">Submit</button>

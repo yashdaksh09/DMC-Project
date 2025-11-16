@@ -123,6 +123,7 @@ app.post('/submit-inspection', (req, res) => {
       console.error('❌ Error saving data:', err);
       return res.status(500).json({ message: 'Database error', error: err });
     }
+    console.log("Data Insert Succesfully")
     res.json({ message: '✅ Data saved successfully!', id: result.insertId });
   });
 });
