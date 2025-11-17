@@ -48,6 +48,8 @@ const schema = yup.object().shape({
 });
 
 function VehicleInspectionDedicated() {
+  const pdfOpened= React.useRef(false);
+  const isSubmitting= React.useRef(false)//only add one time entry in database
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -57,6 +59,9 @@ function VehicleInspectionDedicated() {
   });
 
   const onSubmit = async (data) => {
+    if(isSubmitting.current){
+      return isSubmitting.current=true;
+    }
     try {
       // convert checklist array into object key-value pairs for database
       const checklistData = {};
@@ -95,6 +100,17 @@ function VehicleInspectionDedicated() {
       const result = await res.json();
       if (res.ok) {
         alert('✅ Form submitted successfully!');
+
+         if (result.pdfUrl && !pdfOpened.current) {
+            pdfOpened.current=true;
+          const link = document.createElement('a');
+          link.href = result.pdfUrl;
+          link.download = `Dedicated-form_Vehicle_inspection_${result.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          }
+
         reset();
       } else {
         alert(`⚠️ Submission failed: ${result.message}`);
@@ -102,6 +118,9 @@ function VehicleInspectionDedicated() {
     } catch (err) {
       console.error(err);
       alert('❌ Network error.');
+    }
+    finally{
+      isSubmitting.current=false;
     }
   };
 
@@ -270,7 +289,7 @@ function VehicleInspectionDedicated() {
             
 
         <div className="text-center my-3">
-          <button type="submit" className="btn btn-primary me-2">Submit</button>
+          <button type="submit" className="btn btn-primary me-2">Submit & Save</button>
           <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button>
         </div>
       </form>
