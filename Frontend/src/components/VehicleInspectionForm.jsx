@@ -50,7 +50,7 @@ const schema = yup.object().shape({
 
 function VehicleInspectionForm() {
   const pdfOpened = React.useRef(false);
-  const isSubmitting = React.useRef(false);// only add one time data entry in database
+  const isSubmitting = React.useRef(false);// only add one time data entry in database reasonL- user not submit again and again
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -107,7 +107,7 @@ function VehicleInspectionForm() {
             pdfOpened.current=true;
           const link = document.createElement('a');
           link.href = result.pdfUrl;
-          link.download = `inspection_${result.id}.pdf`;
+          link.download = `OwnVehicle_inspection__${result.id}.pdf`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -121,7 +121,7 @@ function VehicleInspectionForm() {
       alert('❌ Network error.');
     }
     finally {
-  isSubmitting.current = false; //flag reset code line
+  isSubmitting.current = false; //flag reset code line reason:-  // finally feature always run try or catch run or not but finally always execute
 }
 
   };
