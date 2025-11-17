@@ -40,6 +40,8 @@ const schema = yup.object().shape({
 });
 
 function SpotHiredVehicleForm() {
+  const pdfOpened= React.useRef(false);
+  const isSubmitting= React.useRef(false); // only add one time entry reason:-  user not submit again and again
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -49,6 +51,9 @@ function SpotHiredVehicleForm() {
   });
 
   const onSubmit = async (data) => {
+    if(isSubmitting.current){
+      return isSubmitting.current= true;
+    }
     try {
       // convert checklist array into object key-value pairs for database
       const checklistData = {};
@@ -87,6 +92,15 @@ function SpotHiredVehicleForm() {
       const result = await res.json();
       if (res.ok) {
         alert('✅ Form submitted successfully!');
+        if (result.pdfUrl && !pdfOpened.current) {
+            pdfOpened.current=true;
+          const link = document.createElement('a');
+          link.href = result.pdfUrl;
+          link.download = `Spot-Hired-Vehicle_inspection_${result.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          }
         reset();
       } else {
         alert(`⚠️ Submission failed: ${result.message}`);
@@ -94,6 +108,9 @@ function SpotHiredVehicleForm() {
     } catch (err) {
       console.error(err);
       alert('❌ Network error.');
+    }
+    finally{ // finally feature always run try or catch run or not but finally always execute
+      isSubmitting.current= false
     }
   };
 
@@ -111,27 +128,27 @@ function SpotHiredVehicleForm() {
           <tbody>
             <tr>
               <td>Docket No.</td>
-              <td><input className="form-control" {...register('docket_no')} /></td>
+              <td><textarea className="form-control" {...register('docket_no')} /></td>
               <td>DMC In Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} /></td>
             </tr>
             <tr>
               <td>Truck Number</td>
-              <td><input className="form-control" {...register('truck_number')} /></td>
+              <td><textarea className="form-control" {...register('truck_number')} /></td>
               <td>DMC Out Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} /></td>
             </tr>
             <tr>
               <td>Vehicle Type</td>
-              <td><input className="form-control" {...register('vehicle_type')} /></td>
+              <td><textarea className="form-control" {...register('vehicle_type')} /></td>
               <td>Driver Safety Induction</td>
-              <td><input className="form-control" {...register('driver_safety_induction')} /></td>
+              <td><textarea className="form-control" {...register('driver_safety_induction')} /></td>
             </tr>
             <tr>
               <td>Transporter</td>
-              <td><input className="form-control" {...register('transporter')} /></td>
+              <td><textarea className="form-control" {...register('transporter')} /></td>
               <td>Driver Counselling</td>
-              <td><input className="form-control" {...register('driver_counselling')} /></td>
+              <td><textarea className="form-control" {...register('driver_counselling')} /></td>
             </tr>
           </tbody>
         </table>
@@ -161,7 +178,7 @@ function SpotHiredVehicleForm() {
                   {errors.checklist?.[i]?.response && <small className="text-danger">Required</small>}
                 </td>
                 <td>
-                  <input className="form-control" {...register(`checklist.${i}.remark`)} />
+                  <textarea className="form-control" {...register(`checklist.${i}.remark`)} />
                 </td>
               </tr>
             ))}
@@ -183,13 +200,13 @@ function SpotHiredVehicleForm() {
           <tbody>
             <tr>
               <td>Driver Name</td>
-              <td><input className="form-control" {...register('driver_name')} /></td>
+              <td><textarea className="form-control" {...register('driver_name')} /></td>
               <td>Driver Contact No.</td>
-              <td><input className="form-control" {...register('driver_contact_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_contact_no')} /></td>
             </tr>
             <tr>
               <td>Driver DL No.</td>
-              <td><input className="form-control" {...register('driver_dl_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_dl_no')} /></td>
               <td>DL Valid Till</td>
               <td><input type="date" className="form-control" {...register('dl_valid_till')} /></td>
             </tr>
@@ -197,13 +214,13 @@ function SpotHiredVehicleForm() {
               <td>DDT Date</td>
               <td><input type="date" className="form-control" {...register('ddt_date')} /></td>
               <td>DDT Card</td>
-              <td><input className="form-control" {...register('ddt_card_by')} /></td>
+              <td><textarea className="form-control" {...register('ddt_card_by')} /></td>
             </tr>
             <tr>
               <td>Driver Sign.</td>
-              <td><input className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
+              <td><textarea className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
               <td>Inspected By</td>
-              <td><input className="form-control" {...register('inspected_by')} /></td>
+              <td><textarea className="form-control" {...register('inspected_by')} /></td>
             </tr>
           </tbody>
         </table>
@@ -213,11 +230,7 @@ function SpotHiredVehicleForm() {
     <tr>
       {/* LEFT CELL */}
       <td style={{ width: "30%", textAlign: "left" }}>
-        <p >Prepared By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
+        <p >Prepared By</p>
       </td>
 
       {/* RIGHT CELL */}
@@ -228,11 +241,7 @@ function SpotHiredVehicleForm() {
 
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
-        <p>Approved By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
+        <p>Approved By</p>
       </td>
 
       <td>
@@ -243,10 +252,7 @@ function SpotHiredVehicleForm() {
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
         <p>Revision Date :</p>
-        <input style={{width:"20rem"}}
-          type="date"
-          className="form-control mt-1"
-        />
+        <p>28-10-2024</p>
       </td>
 
       <td>
@@ -258,7 +264,7 @@ function SpotHiredVehicleForm() {
 
 
         <div className="text-center my-3">
-          <button type="submit" className="btn btn-primary me-2">Submit</button>
+          <button type="submit" className="btn btn-primary me-2">Submit & Save</button>
           <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button>
         </div>
       </form>
