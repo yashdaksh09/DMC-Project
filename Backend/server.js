@@ -19,7 +19,8 @@ const hindiFont = path.join(
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/inspection_pdfs", express.static(path.join(__dirname, "inspection_pdfs")));
+app.use("/OwnVehicle_inspection_pdfs", express.static(path.join(__dirname, "OwnVehicle_inspection_pdfs")));
+app.use("/Spot-Hired-Vehicle_inspection_pdfs", express.static(path.join(__dirname, "Spot-Hired-Vehicle_inspection_pdfs" )))
 
 
 
@@ -155,7 +156,7 @@ app.post('/submit-inspection', (req, res) => {
       const insertId = result.insertId;
       console.log("Data Inserted with id:", insertId);
 
-      const pdfFolder = path.join(__dirname, "inspection_pdfs");
+      const pdfFolder = path.join(__dirname, "OwnVehicle_inspection_pdfs");
       if (!fs.existsSync(pdfFolder)) fs.mkdirSync(pdfFolder, { recursive: true });
 
       const pdfPath = path.join(pdfFolder, `inspection_${insertId}.pdf`);
@@ -388,7 +389,7 @@ app.post('/submit-inspection', (req, res) => {
               });
             }
 
-            const pdfUrl = `http://localhost:3456/inspection_pdfs/inspection_${insertId}.pdf`;
+            const pdfUrl = `http://localhost:3456/OwnVehicle_inspection_pdfs/inspection_${insertId}.pdf`;
 
             res.json({
               message: "Data saved and PDF generated!",
@@ -418,6 +419,8 @@ app.post('/submit-inspection', (req, res) => {
 });
 
 
+
+//---------------------------------Spot Hired Vehicle Inspection API-----------------------------------------
 
 app.post('/spot-hired-vehicle', (req, res) => {
   const data = req.body;
@@ -495,16 +498,293 @@ app.post('/spot-hired-vehicle', (req, res) => {
     data.driver_sig, data.inspected_by
   ];
 
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error('❌ Error saving data:', err);
-      return res.status(500).json({ message: 'Database error', error: err });
+  
+  // TRANSACTION START
+  db.beginTransaction((txErr) => {
+    if (txErr) {
+      return res.status(500).json({ message: 'DB transaction error', error: txErr });
     }
-    res.json({ message: '✅ Data saved successfully!', id: result.insertId });
+
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        return db.rollback(() => {
+          res.status(500).json({ message: 'Database error', error: err });
+        });
+      }
+
+      const insertId = result.insertId;
+      console.log("Data Inserted with id:", insertId);
+
+      const pdfFolder = path.join(__dirname, "Spot-Hired-Vehicle_inspection_pdfs");
+      if (!fs.existsSync(pdfFolder)) fs.mkdirSync(pdfFolder, { recursive: true });
+
+      const pdfPath = path.join(pdfFolder, `inspection_${insertId}.pdf`);
+
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 36 });
+
+        // FONT REGISTER SAFE MODE
+        if (hindiFont && fs.existsSync(hindiFont)) {
+          doc.registerFont("Hindi", hindiFont);
+        } else {
+          console.warn("⚠ Hindi font missing:", hindiFont);
+        }
+
+        const stream = fs.createWriteStream(pdfPath);
+        doc.pipe(stream);
+
+        /*******************************
+         *  HEADER
+         ******************************/
+        doc.rect(18, 18, doc.page.width - 36, doc.page.height - 36).stroke();
+        doc.fontSize(18).font("Helvetica-Bold")
+          .text("BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata", { align: "center" });
+
+        doc.moveDown(0.2);
+        doc.fontSize(10).font("Helvetica")
+          .text("Revision No. 02 | BAIL-S-155-01-01-00-07", { align: "center" });
+
+        doc.moveDown(0.6);
+        doc.fontSize(16).font("Helvetica-Bold")
+          .text("VEHICLE INSPECTION CHECKLIST-Spot Hired Vehicle ", { align: "center" });
+
+        doc.moveDown(0.8);
+
+        /*********************************
+         * INFO TABLE
+         *********************************/
+        const leftX = doc.page.margins.left;
+        const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const colWidth = usableWidth / 4;
+        const cellH = 48;
+
+        function drawCell(x, y, w, h, label, value) {
+          doc.rect(x, y, w, h).stroke();
+          doc.font("Helvetica").fontSize(10).text(label, x + 6, y + 6);
+          if (value) {
+            doc.text(String(value), x + 6, y + 22);
+          }
+        }
+
+        let y = doc.y;
+
+        drawCell(leftX, y, colWidth, cellH, "Docket No. :", data.docket_no);
+        drawCell(leftX + colWidth, y, colWidth, cellH, "DMC In Date & Time: ", data.dmc_in_datetime);
+        drawCell(leftX + 2 * colWidth, y, colWidth, cellH, "Truck Number: ", data.truck_number);
+        drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "DMC Out Date & Time: ", data.dmc_out_datetime);
+        y += cellH;
+
+        drawCell(leftX, y, colWidth, cellH, "Vehicle Type: ", data.vehicle_type);
+        drawCell(leftX + colWidth, y, colWidth, cellH, "Driver Safety Induction: ", data.driver_safety_induction);
+        drawCell(leftX + 2 * colWidth, y, colWidth, cellH, "Transporter: ", data.transporter);
+        drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "Driver Counselling: ", data.driver_counselling);
+        y += cellH + 10;
+
+        /************************************
+         * CHECKLIST TABLE HEADER
+         ************************************/
+        const tableX = leftX;
+        const tableW = usableWidth;
+        const colSrW = 40;
+        const colDescW = tableW * 0.55;
+        const colRespW = (tableW - colSrW - colDescW) / 2;
+        const colRemW = colRespW;
+        const rowH = 24;
+
+        doc.font("Helvetica-Bold").fontSize(11).fillColor("white");
+        doc.rect(tableX, y, tableW, rowH).fill("#222");
+
+        doc.text("Sr. No.", tableX + 6, y + 6);
+        doc.text("Checklist Description", tableX + colSrW + 6, y + 6);
+        doc.text("Response", tableX + colSrW + colDescW + 6, y + 6);
+        doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, y + 6);
+
+        y += rowH;
+
+        doc.fillColor("black").font("Helvetica").fontSize(10);
+
+        function checklistItemsLabels(k) {
+          const map = {
+            vehicle_documents: "Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)",
+            driver_fit_dl: "Driver Fit for Working & Their DL",
+            body_condition: "Vehicle Body Condition",
+            gear_condition: "Vehicle Gear Condition",
+            tyre_condition: "Vehicle Tyre & Rim Condition / Spare Tyre",
+            head_light: "Head Light",
+            indicators: "Indicators",
+            break_light: "Break Light",
+            wind_shield: "Wind Shield",
+            wiper: "Wiper",
+            mirrors: "Rear View & Blind Spot Mirrors",
+            horn: "Horn & Reverse Horn",
+            first_aid_kit: "First Aid Kit",
+            fire_extinguisher: "Fire Extinguisher",
+            reflective_tape: "Reflective Tape / Triangle",
+            rupd_supd: "RUPD and SUPD (Rear and Side Under Protection Device)",
+            seat_belt: "Seat Belt",
+            speed_governor: "Speed Governor",
+            brake_condition: "Brake Condition",
+          };
+          return map[k] || k;
+        }
+
+        checklistItems.forEach((key, i) => {
+
+          if (y + rowH + 80 > doc.page.height - doc.page.margins.bottom) {
+            doc.addPage();
+            y = doc.page.margins.top;
+          }
+
+          doc.rect(tableX, y, tableW, rowH).stroke();
+          doc.text(String(i + 1), tableX + 6, y + 6);
+          doc.text(checklistItemsLabels(key), tableX + colSrW + 6, y + 6);
+          doc.text(String(checklistData[key] || ""), tableX + colSrW + colDescW + 6, y + 6);
+          doc.text(String(checklistData[`${key}_remark`] || ""), tableX + colSrW + colDescW + colRespW + 6, y + 6);
+
+          y += rowH;
+        });
+
+        /*******************************
+         *  DECLARATION
+         ******************************/
+        y += 20;
+
+        if (y + 250 > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+          y = doc.page.margins.top;
+        }
+
+        doc.rect(leftX, y, usableWidth, 30).stroke();
+        doc.font("Hindi").fontSize(12)
+          .text("Driver Declaration:", leftX + 10, y + 8);
+
+        y += 30;
+        doc.rect(leftX, y, tableW, 120).stroke();
+
+        doc.font("Hindi").fontSize(12)
+          .text(
+            "मैं यह घोषणा करता हूँ कि मैं कोई शराब या नशीली दवा नहीं पी है। "
+            + "मैंने वाहन की जांच की है और वह पूरी तरह सुरक्षित है।",
+            leftX + 10, y + 10, { width: tableW - 20 }
+          );
+
+        doc.rect(leftX + 10, y + 55, 12, 12).stroke();
+        doc.font("Hindi").text("मैं सहमत हूँ", leftX + 30, y + 53);
+
+        y += 140;
+
+        /*******************************
+         * DRIVER DETAILS TABLE
+         ******************************/
+        const rowHeight = 40;
+        const half = tableW / 2;
+
+        function drawRow(label1, v1, label2, v2) {
+          doc.rect(leftX, y, half, rowHeight).stroke();
+          doc.rect(leftX + half, y, half, rowHeight).stroke();
+
+          doc.font("Helvetica-Bold").text(label1, leftX + 8, y + 8);
+          doc.font("Helvetica").text(String(v1 || ""), leftX + 8, y + 25);
+
+          doc.font("Helvetica-Bold").text(label2, leftX + half + 8, y + 8);
+          doc.font("Helvetica").text(String(v2 || ""), leftX + half + 8, y + 25);
+
+          y += rowHeight;
+        }
+
+        drawRow("Driver Name: ", data.driver_name, "Driver Contact No.: ", data.driver_contact_no);
+        drawRow("Driver DL No.: ", data.driver_dl_no, "DL Valid Till: ", data.dl_valid_till);
+        drawRow("DDT Date: ", data.ddt_date, "DDT Card: ", data.ddt_card_by);
+        drawRow("Driver Sign.: ", data.driver_sig, "Inspected By: ", data.inspected_by);
+
+        /*******************************
+         * SIGNATURE BLOCK
+         ******************************/
+        y += 20;
+
+        if (y + 160 > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+          y = doc.page.margins.top;
+        }
+
+        doc.rect(leftX, y, tableW, 160).stroke();
+
+        const leftColW = tableW * 0.45;
+
+        // row 1
+        doc.font("Helvetica-Bold").text("Prepared By :", leftX + 10, y + 10);
+        doc.rect(leftX + 10, y + 25, leftColW - 20, 25).stroke();
+        doc.font("Helvetica").text("Transport Incharge", leftX + leftColW + 20, y + 15);
+
+        // row 2
+        y += rowHeight;
+        doc.font("Helvetica-Bold").text("Approved By :", leftX + 10, y + 10);
+        doc.rect(leftX + 10, y + 25, leftColW - 20, 25).stroke();
+        doc.font("Helvetica").text("General Manager", leftX + leftColW + 20, y + 15);
+
+        // row 3
+        y += rowHeight;
+        doc.font("Helvetica").text("Revision Date : 29-08-2023", leftX + 10, y + 15);
+        doc.text("CLASSIFIED • CONFIDENTIAL • FOR INTERNAL USE ONLY",
+          leftX + leftColW + 20, y + 15);
+
+        /*******************************
+         * END PDF
+         ******************************/
+        doc.end();
+
+        stream.on("finish", () => {
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                res.status(500).json({ message: "Commit failed", error: err });
+              });
+            }
+
+            const pdfUrl = `http://localhost:3456/Spot-Hired-Vehicle_inspection_pdfs/inspection_${insertId}.pdf`; // Generate Only Spot Hired Vehicle
+
+            res.json({
+              message: "Data saved and PDF generated!",
+              id: insertId,
+              pdfUrl
+            });
+          });
+        });
+
+        stream.on("error", (err) => {
+          if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+          return db.rollback(() => {
+            res.status(500).json({
+              message: "PDF write failed. Rollback done.",
+              error: err
+            });
+          });
+        });
+
+      } catch (err) {
+        return db.rollback(() => {
+          res.status(500).json({ message: "PDF generation failed.", error: err });
+        });
+      }
+    });
   });
+
+
+
+
+  // db.query(sql, values, (err, result) => {
+  //   if (err) {
+  //     console.error('❌ Error saving data:', err);
+  //     return res.status(500).json({ message: 'Database error', error: err });
+  //   }
+  //   res.json({ message: '✅ Data saved successfully!', id: result.insertId });
+  // });
 });
 
 
+
+
+//--------------------------------------------------Dedicated Vehicle Inspection API------------------------------------------------------------------
 app.post('/dedicated_vehicle-inspection', (req, res) => {
   const data = req.body;
 
