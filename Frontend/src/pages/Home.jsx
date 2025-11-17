@@ -1,11 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css"
+import BetaBadge from "../../BetaBadge";
 
 function Home() {
   const navigate = useNavigate();
 
   return (
+    <>
+    <BetaBadge/>
     <div className="home-container">
       <header className="home-header">
         <h1>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED</h1>
@@ -40,6 +43,7 @@ function Home() {
         <p>© 2025 BAIL - All Rights Reserved</p>
       </footer>
     </div>
+    </>
   );
 }
 
