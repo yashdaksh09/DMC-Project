@@ -120,7 +120,9 @@ function VehicleInspectionForm() {
       console.error(err);
       alert('❌ Network error.');
     }
-    isSubmitting.current = false;
+    finally {
+  isSubmitting.current = false; //flag reset code line
+}
 
   };
 
@@ -244,10 +246,6 @@ function VehicleInspectionForm() {
       {/* LEFT CELL */}
       <td style={{ width: "30%", textAlign: "left" }}>
         <p >Prepared By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
       </td>
 
       {/* RIGHT CELL */}
@@ -259,10 +257,6 @@ function VehicleInspectionForm() {
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
         <p>Approved By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
       </td>
 
       <td>
