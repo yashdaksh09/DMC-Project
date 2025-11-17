@@ -225,28 +225,55 @@ app.post('/submit-inspection', (req, res) => {
         drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "Driver Counselling", data.driver_counselling);
         y += cellH + 10;
 
-        /************************************
-         * CHECKLIST TABLE HEADER
-         ************************************/
-        const tableX = leftX;
-        const tableW = usableWidth;
-        const colSrW = 40;
-        const colDescW = tableW * 0.55;
-        const colRespW = (tableW - colSrW - colDescW) / 2;
-        const colRemW = colRespW;
-        const rowH = 24;
+      /************************************
+ * CHECKLIST TABLE HEADER (FIXED)
+ ************************************/
+const tableX = leftX;
+const tableW = usableWidth;
+const colSrW = 40;
+const colDescW = tableW * 0.55;
+const colRespW = (tableW - colSrW - colDescW) / 2;
+const colRemW = colRespW;
+const rowH = 28;
 
-        doc.font("Helvetica-Bold").fontSize(11).fillColor("white");
-        doc.rect(tableX, y, tableW, rowH).fill("#222");
+// Save graphics state
+doc.save();
 
-        doc.text("Sr. No.", tableX + 6, y + 6);
-        doc.text("Checklist Description", tableX + colSrW + 6, y + 6);
-        doc.text("Response", tableX + colSrW + colDescW + 6, y + 6);
-        doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, y + 6);
+// Draw black header background
+doc.rect(tableX, y, tableW, rowH).fill("#222");
 
-        y += rowH;
+// Set white bold text
+doc.fillColor("white").font("Helvetica-Bold").fontSize(11);
 
-        doc.fillColor("black").font("Helvetica").fontSize(10);
+// Vertical centering inside 28px height
+const headerTextY = y + 8;
+
+// Text columns
+doc.text("Sr. No.", tableX + 6, headerTextY, {
+  width: colSrW - 12,
+  align: "left"
+});
+doc.text("Checklist Description", tableX + colSrW + 6, headerTextY, {
+  width: colDescW - 12,
+  align: "left"
+});
+doc.text("Response", tableX + colSrW + colDescW + 6, headerTextY, {
+  width: colRespW - 12,
+  align: "left"
+});
+doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, headerTextY, {
+  width: colRemW - 12,
+  align: "left"
+});
+
+// Restore normal state
+doc.restore();
+
+// Move Y down
+y += rowH;
+
+// Return text style to normal black
+doc.fillColor("black").font("Helvetica").fontSize(10);
 
         function checklistItemsLabels(k) {
           const map = {
@@ -584,28 +611,55 @@ app.post('/spot-hired-vehicle', (req, res) => {
         drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "Driver Counselling: ", data.driver_counselling);
         y += cellH + 10;
 
-        /************************************
-         * CHECKLIST TABLE HEADER
-         ************************************/
-        const tableX = leftX;
-        const tableW = usableWidth;
-        const colSrW = 40;
-        const colDescW = tableW * 0.55;
-        const colRespW = (tableW - colSrW - colDescW) / 2;
-        const colRemW = colRespW;
-        const rowH = 24;
+              /************************************
+ * CHECKLIST TABLE HEADER (FIXED)
+ ************************************/
+const tableX = leftX;
+const tableW = usableWidth;
+const colSrW = 40;
+const colDescW = tableW * 0.55;
+const colRespW = (tableW - colSrW - colDescW) / 2;
+const colRemW = colRespW;
+const rowH = 28;
 
-        doc.font("Helvetica-Bold").fontSize(11).fillColor("white");
-        doc.rect(tableX, y, tableW, rowH).fill("#222");
+// Save graphics state
+doc.save();
 
-        doc.text("Sr. No.", tableX + 6, y + 6);
-        doc.text("Checklist Description", tableX + colSrW + 6, y + 6);
-        doc.text("Response", tableX + colSrW + colDescW + 6, y + 6);
-        doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, y + 6);
+// Draw black header background
+doc.rect(tableX, y, tableW, rowH).fill("#222");
 
-        y += rowH;
+// Set white bold text
+doc.fillColor("white").font("Helvetica-Bold").fontSize(11);
 
-        doc.fillColor("black").font("Helvetica").fontSize(10);
+// Vertical centering inside 28px height
+const headerTextY = y + 8;
+
+// Text columns
+doc.text("Sr. No.", tableX + 6, headerTextY, {
+  width: colSrW - 12,
+  align: "left"
+});
+doc.text("Checklist Description", tableX + colSrW + 6, headerTextY, {
+  width: colDescW - 12,
+  align: "left"
+});
+doc.text("Response", tableX + colSrW + colDescW + 6, headerTextY, {
+  width: colRespW - 12,
+  align: "left"
+});
+doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, headerTextY, {
+  width: colRemW - 12,
+  align: "left"
+});
+
+// Restore normal state
+doc.restore();
+
+// Move Y down
+y += rowH;
+
+// Return text style to normal black
+doc.fillColor("black").font("Helvetica").fontSize(10);
 
         function checklistItemsLabels(k) {
           const map = {
@@ -963,28 +1017,55 @@ app.post('/dedicated_vehicle-inspection', (req, res) => {
         drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "Driver Counselling: ", data.driver_counselling);
         y += cellH + 10;
 
-        /************************************
-         * CHECKLIST TABLE HEADER
-         ************************************/
-        const tableX = leftX;
-        const tableW = usableWidth;
-        const colSrW = 40;
-        const colDescW = tableW * 0.55;
-        const colRespW = (tableW - colSrW - colDescW) / 2;
-        const colRemW = colRespW;
-        const rowH = 24;
+              /************************************
+ * CHECKLIST TABLE HEADER (FIXED)
+ ************************************/
+const tableX = leftX;
+const tableW = usableWidth;
+const colSrW = 40;
+const colDescW = tableW * 0.55;
+const colRespW = (tableW - colSrW - colDescW) / 2;
+const colRemW = colRespW;
+const rowH = 28;
 
-        doc.font("Helvetica-Bold").fontSize(11).fillColor("white");
-        doc.rect(tableX, y, tableW, rowH).fill("#222");
+// Save graphics state
+doc.save();
 
-        doc.text("Sr. No.", tableX + 6, y + 6);
-        doc.text("Checklist Description", tableX + colSrW + 6, y + 6);
-        doc.text("Response", tableX + colSrW + colDescW + 6, y + 6);
-        doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, y + 6);
+// Draw black header background
+doc.rect(tableX, y, tableW, rowH).fill("#222");
 
-        y += rowH;
+// Set white bold text
+doc.fillColor("white").font("Helvetica-Bold").fontSize(11);
 
-        doc.fillColor("black").font("Helvetica").fontSize(10);
+// Vertical centering inside 28px height
+const headerTextY = y + 8;
+
+// Text columns
+doc.text("Sr. No.", tableX + 6, headerTextY, {
+  width: colSrW - 12,
+  align: "left"
+});
+doc.text("Checklist Description", tableX + colSrW + 6, headerTextY, {
+  width: colDescW - 12,
+  align: "left"
+});
+doc.text("Response", tableX + colSrW + colDescW + 6, headerTextY, {
+  width: colRespW - 12,
+  align: "left"
+});
+doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, headerTextY, {
+  width: colRemW - 12,
+  align: "left"
+});
+
+// Restore normal state
+doc.restore();
+
+// Move Y down
+y += rowH;
+
+// Return text style to normal black
+doc.fillColor("black").font("Helvetica").fontSize(10);
 
         function checklistItemsLabels(k) {
           const map = {
