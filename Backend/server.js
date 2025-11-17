@@ -6,12 +6,21 @@ const path = require("path")
 const fs=  require("fs")
 const PDFDocument= require("pdfkit") //pdfkit package import
 const PORT = 3456;
+const hindiFont = path.join(
+  __dirname,
+  "fonts",
+  "NotoSansDevanagari-Regular.ttf",
+  "NotoSansDevanagari-VariableFont_wdth,wght.ttf"
+);
+ //hindi font require
+
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/inspection_pdfs", express.static(path.join(__dirname, "inspection_pdfs")));
+
 
 
 // MySQL connection
@@ -32,6 +41,7 @@ db.connect((err) => {
 
 // API to insert vehicle inspection form
 app.post('/submit-inspection', (req, res) => {
+
   const data = req.body;
   console.log('Request Body: ', data);
 
@@ -45,14 +55,14 @@ app.post('/submit-inspection', (req, res) => {
     'products_stored','walk_around','empty_bucket'
   ];
 
-  // prepare checklistData (if needed separately)
+  // prepare checklistData
   const checklistData = {};
   checklistItems.forEach((key) => {
     checklistData[key] = data[key];
     checklistData[`${key}_remark`] = data[`${key}_remark`];
   });
 
-  // SQL and values (same columns as before)
+  // SQL query
   const sql = `
     INSERT INTO vehicle_inspection_form (
       docket_no, dmc_in_datetime, dmc_out_datetime,
@@ -87,13 +97,15 @@ app.post('/submit-inspection', (req, res) => {
       driver_declaration, driver_name, driver_contact_no,
       driver_dl_no, dl_valid_till, ddt_date, ddt_card_by,
       driver_sig, inspected_by
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ) 
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const values = [
     data.docket_no, data.dmc_in_datetime, data.dmc_out_datetime,
     data.truck_number, data.vehicle_type, data.transporter,
     data.driver_safety_induction, data.driver_counselling,
+
     checklistData.vehicle_documents, checklistData.vehicle_documents_remark,
     checklistData.driver_fit_dl, checklistData.driver_fit_dl_remark,
     checklistData.body_condition, checklistData.body_condition_remark,
@@ -120,83 +132,97 @@ app.post('/submit-inspection', (req, res) => {
     checklistData.products_stored, checklistData.products_stored_remark,
     checklistData.walk_around, checklistData.walk_around_remark,
     checklistData.empty_bucket, checklistData.empty_bucket_remark,
+
     data.driver_declaration ? 1 : 0,
     data.driver_name, data.driver_contact_no,
     data.driver_dl_no, data.dl_valid_till, data.ddt_date, data.ddt_card_by,
     data.driver_sig, data.inspected_by
   ];
 
-  // ---------------------------
-  // Use transaction to avoid duplicates if pdf fails
-  // ---------------------------
+  // TRANSACTION START
   db.beginTransaction((txErr) => {
     if (txErr) {
-      console.error('Transaction start error:', txErr);
       return res.status(500).json({ message: 'DB transaction error', error: txErr });
     }
 
     db.query(sql, values, (err, result) => {
       if (err) {
-        console.error('❌ Error saving data:', err);
         return db.rollback(() => {
-          return res.status(500).json({ message: 'Database error', error: err });
+          res.status(500).json({ message: 'Database error', error: err });
         });
       }
 
       const insertId = result.insertId;
-      console.log('Data Inserted with id:', insertId);
+      console.log("Data Inserted with id:", insertId);
 
-      // PDF folder & path
       const pdfFolder = path.join(__dirname, "inspection_pdfs");
       if (!fs.existsSync(pdfFolder)) fs.mkdirSync(pdfFolder, { recursive: true });
+
       const pdfPath = path.join(pdfFolder, `inspection_${insertId}.pdf`);
 
-      // Start PDF generation (attempt). If it fails -> rollback
       try {
         const doc = new PDFDocument({ size: 'A4', margin: 36 });
+
+        // FONT REGISTER SAFE MODE
+        if (hindiFont && fs.existsSync(hindiFont)) {
+          doc.registerFont("Hindi", hindiFont);
+        } else {
+          console.warn("⚠ Hindi font missing:", hindiFont);
+        }
+
         const stream = fs.createWriteStream(pdfPath);
         doc.pipe(stream);
 
-        // --- Header ---
-        doc.rect(18, 18, doc.page.width - 36, doc.page.height - 36).stroke(); // outer border
-        doc.fontSize(18).font('Helvetica-Bold').text('BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata', { align: 'center' });
+        /*******************************
+         *  HEADER
+         ******************************/
+        doc.rect(18, 18, doc.page.width - 36, doc.page.height - 36).stroke();
+        doc.fontSize(18).font("Helvetica-Bold")
+          .text("BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata", { align: "center" });
+
         doc.moveDown(0.2);
-        doc.fontSize(10).font('Helvetica').text('Revision No. 02 | BAIL-S-155-01-01-00-07', { align: 'center' });
+        doc.fontSize(10).font("Helvetica")
+          .text("Revision No. 02 | BAIL-S-155-01-01-00-07", { align: "center" });
+
         doc.moveDown(0.6);
-        doc.fontSize(16).font('Helvetica-Bold').text('VEHICLE INSPECTION CHECKLIST', { align: 'center' });
+        doc.fontSize(16).font("Helvetica-Bold")
+          .text("VEHICLE INSPECTION CHECKLIST", { align: "center" });
+
         doc.moveDown(0.8);
 
-        // --- Info table (4 columns laid out) ---
+        /*********************************
+         * INFO TABLE
+         *********************************/
         const leftX = doc.page.margins.left;
         const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
         const colWidth = usableWidth / 4;
         const cellH = 48;
 
-        // small helper to draw cell
         function drawCell(x, y, w, h, label, value) {
           doc.rect(x, y, w, h).stroke();
-          doc.font('Helvetica').fontSize(10).text(label, x + 6, y + 6, { width: w - 12 });
+          doc.font("Helvetica").fontSize(10).text(label, x + 6, y + 6);
           if (value) {
-            doc.font('Helvetica').fontSize(10).text(String(value), x + 6, y + 22, { width: w - 12 });
+            doc.text(String(value), x + 6, y + 22);
           }
         }
 
         let y = doc.y;
-        // row 1
-        drawCell(leftX, y, colWidth, cellH, 'Docket No.', data.docket_no || '');
-        drawCell(leftX + colWidth, y, colWidth, cellH, 'DMC In Date & Time', data.dmc_in_datetime || '');
-        drawCell(leftX + 2*colWidth, y, colWidth, cellH, 'Truck Number', data.truck_number || '');
-        drawCell(leftX + 3*colWidth, y, colWidth, cellH, 'DMC Out Date & Time', data.dmc_out_datetime || '');
+
+        drawCell(leftX, y, colWidth, cellH, "Docket No.", data.docket_no);
+        drawCell(leftX + colWidth, y, colWidth, cellH, "DMC In Date & Time", data.dmc_in_datetime);
+        drawCell(leftX + 2 * colWidth, y, colWidth, cellH, "Truck Number", data.truck_number);
+        drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "DMC Out Date & Time", data.dmc_out_datetime);
         y += cellH;
 
-        // row 2
-        drawCell(leftX, y, colWidth, cellH, 'Vehicle Type', data.vehicle_type || '');
-        drawCell(leftX + colWidth, y, colWidth, cellH, 'Driver Safety Induction', data.driver_safety_induction || '');
-        drawCell(leftX + 2*colWidth, y, colWidth, cellH, 'Transporter', data.transporter || '');
-        drawCell(leftX + 3*colWidth, y, colWidth, cellH, 'Driver Counselling', data.driver_counselling || '');
+        drawCell(leftX, y, colWidth, cellH, "Vehicle Type", data.vehicle_type);
+        drawCell(leftX + colWidth, y, colWidth, cellH, "Driver Safety Induction", data.driver_safety_induction);
+        drawCell(leftX + 2 * colWidth, y, colWidth, cellH, "Transporter", data.transporter);
+        drawCell(leftX + 3 * colWidth, y, colWidth, cellH, "Driver Counselling", data.driver_counselling);
         y += cellH + 10;
 
-        // --- Checklist table header ---
+        /************************************
+         * CHECKLIST TABLE HEADER
+         ************************************/
         const tableX = leftX;
         const tableW = usableWidth;
         const colSrW = 40;
@@ -205,152 +231,192 @@ app.post('/submit-inspection', (req, res) => {
         const colRemW = colRespW;
         const rowH = 24;
 
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('white');
-        doc.rect(tableX, y, tableW, rowH).fill('#222');
-        doc.fillColor('white').text('Sr. No.', tableX + 6, y + 6, { width: colSrW - 12 });
-        doc.text('Checklist Description', tableX + colSrW + 6, y + 6, { width: colDescW - 12 });
-        doc.text('Response', tableX + colSrW + colDescW + 6, y + 6, { width: colRespW - 12 });
-        doc.text('Remarks', tableX + colSrW + colDescW + colRespW + 6, y + 6, { width: colRemW - 12 });
+        doc.font("Helvetica-Bold").fontSize(11).fillColor("white");
+        doc.rect(tableX, y, tableW, rowH).fill("#222");
+
+        doc.text("Sr. No.", tableX + 6, y + 6);
+        doc.text("Checklist Description", tableX + colSrW + 6, y + 6);
+        doc.text("Response", tableX + colSrW + colDescW + 6, y + 6);
+        doc.text("Remarks", tableX + colSrW + colDescW + colRespW + 6, y + 6);
+
         y += rowH;
 
-        doc.fillColor('black').font('Helvetica').fontSize(10);
+        doc.fillColor("black").font("Helvetica").fontSize(10);
 
-        // iterate checklist items to draw rows (wrap page if needed)
+        function checklistItemsLabels(k) {
+          const map = {
+            vehicle_documents: "Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)",
+            driver_fit_dl: "Driver Fit for Working & Their DL",
+            body_condition: "Vehicle Body Condition",
+            gear_condition: "Vehicle Gear Condition",
+            tyre_condition: "Vehicle Tyre & Rim Condition / Spare Tyre",
+            head_light: "Head Light",
+            indicators: "Indicators",
+            break_light: "Break Light",
+            wind_shield: "Wind Shield",
+            wiper: "Wiper",
+            mirrors: "Rear View & Blind Spot Mirrors",
+            horn: "Horn & Reverse Horn",
+            first_aid_kit: "First Aid Kit",
+            fire_extinguisher: "Fire Extinguisher",
+            reflective_tape: "Reflective Tape / Triangle",
+            rupd: "RUPD",
+            supd: "SUPD",
+            seat_belt: "Seat Belt",
+            gps_device: "GPS Device",
+            speed_governor: "Speed Governor",
+            brake_condition: "Brake Condition",
+            rear_sensor_Rear_camera: "Rear Sensor & Rear Camera",
+            steering_condition: "Steering Condition",
+            products_stored: "Products Stored",
+            walk_around: "360° Walk Around",
+            empty_bucket: "Empty Bucket"
+          };
+          return map[k] || k;
+        }
+
         checklistItems.forEach((key, i) => {
-          const label = key.replace(/_/g, ' ').replace(/rear sensor rear camera/i, 'Rear Sensor & Rear Camera');
-          const response = (data[key] !== undefined && data[key] !== null) ? data[key] : '';
-          const remark = data[`${key}_remark`] || '';
 
-          // page break if not enough space
           if (y + rowH + 80 > doc.page.height - doc.page.margins.bottom) {
             doc.addPage();
             y = doc.page.margins.top;
           }
 
-          // row border
           doc.rect(tableX, y, tableW, rowH).stroke();
-          doc.text(String(i + 1), tableX + 6, y + 6, { width: colSrW - 12 });
-          doc.text(checklistItemsLabels(key) , tableX + colSrW + 6, y + 6, { width: colDescW - 12 });
-          doc.text(response, tableX + colSrW + colDescW + 6, y + 6, { width: colRespW - 12 });
-          doc.text(remark, tableX + colSrW + colDescW + colRespW + 6, y + 6, { width: colRemW - 12 });
+          doc.text(String(i + 1), tableX + 6, y + 6);
+          doc.text(checklistItemsLabels(key), tableX + colSrW + 6, y + 6);
+          doc.text(String(checklistData[key] || ""), tableX + colSrW + colDescW + 6, y + 6);
+          doc.text(String(checklistData[`${key}_remark`] || ""), tableX + colSrW + colDescW + colRespW + 6, y + 6);
 
           y += rowH;
         });
 
-        // small helper to map nicer labels (so PDF matches frontend labels)
-        function checklistItemsLabels(k) {
-          const map = {
-            'vehicle_documents': 'Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)',
-            'driver_fit_dl': 'Driver Fit for Working & Their DL',
-            'body_condition': 'Vehicle Body Condition',
-            'gear_condition': 'Vehicle Gear Condition',
-            'tyre_condition': 'Vehicle Tyre and Rim Condition Or Spare Tyre',
-            'head_light': 'Head Light',
-            'indicators': 'Indicators',
-            'break_light': 'Break Light',
-            'wind_shield': 'Wind Shield',
-            'wiper': 'Wiper (Both Side Working)',
-            'mirrors': 'Rear View & Blind Spot Mirrors (Check for Clear Visibility)',
-            'horn': 'Horn & Reverse Horn (Working Condition)',
-            'first_aid_kit': 'Basic First aid Kit',
-            'fire_extinguisher': 'Fire Extinguisher',
-            'reflective_tape': 'Reflective Tape & Breakdown Safety Triangle',
-            'rupd': 'RUPD (Rear Under Protection Device)',
-            'supd': 'SUPD (Side Under Protection Device)',
-            'seat_belt': 'Seat Belt (Both Side)',
-            'gps_device': 'GPS Device',
-            'speed_governor': 'Speed Governor (Speed Controller)',
-            'brake_condition': 'Brake Condition, Hand Brake or Wheel Chocks',
-            'rear_sensor_Rear_camera': 'Rear Sensor & Rear Camera',
-            'steering_condition': 'Steering Wheel Looseness, Damage',
-            'products_stored': 'Products Stored Securely',
-            'walk_around': '360 Degree Walk Around',
-            'empty_bucket': 'Other (Empty Bucket For Spillage Control)'
-          };
-          return map[k] || k;
-        }
-
-        // move down to signature area
+        /*******************************
+         *  DECLARATION
+         ******************************/
         y += 20;
-        if (y + 140 > doc.page.height - doc.page.margins.bottom) {
+
+        if (y + 250 > doc.page.height - doc.page.margins.bottom) {
           doc.addPage();
           y = doc.page.margins.top;
         }
 
-        // Signature / Prepared / Approved area
-        const sigX = tableX;
-        const sigW = tableW;
-        const sigH = 120;
-        doc.rect(sigX, y, sigW, sigH).stroke();
+        doc.rect(leftX, y, usableWidth, 30).stroke();
+        doc.font("Hindi").fontSize(12)
+          .text("Driver Declaration:", leftX + 10, y + 8);
 
-        // left column (Prepared By)
-        const colLeftW = sigW * 0.4;
-        doc.text('Prepared By :', sigX + 10, y + 10);
-        doc.rect(sigX + 8, y + 30, colLeftW - 16, 30).stroke();
-        doc.text(String(data.prepared_by || ''), sigX + 12, y + 34);
+        y += 30;
+        doc.rect(leftX, y, tableW, 120).stroke();
 
-        // middle text
-        doc.text('Transport Incharge', sigX + colLeftW + 10, y + 12);
+        doc.font("Hindi").fontSize(12)
+          .text(
+            "मैं यह घोषणा करता हूँ कि मैं कोई शराब या नशीली दवा नहीं पी है। "
+            + "मैंने वाहन की जांच की है और वह पूरी तरह सुरक्षित है।",
+            leftX + 10, y + 10, { width: tableW - 20 }
+          );
 
-        // right column (Approved By)
-        const rightX = sigX + colLeftW + 10;
-        doc.text('Approved By :', rightX + 6, y + 10);
-        doc.rect(rightX + 4, y + 30, sigW - colLeftW - 40, 30).stroke();
-        doc.text(String(data.approved_by || ''), rightX + 8, y + 34);
+        doc.rect(leftX + 10, y + 55, 12, 12).stroke();
+        doc.font("Hindi").text("मैं सहमत हूँ", leftX + 30, y + 53);
 
-        // final footer
-        doc.text('Revision Date : 29-08-2023', sigX + 10, y + sigH - 30);
-        doc.text('CLASSIFIED • CONFIDENTIAL • FOR INTERNAL USE ONLY', sigX + colLeftW + 10, y + sigH - 30);
+        y += 140;
 
+        /*******************************
+         * DRIVER DETAILS TABLE
+         ******************************/
+        const rowHeight = 40;
+        const half = tableW / 2;
+
+        function drawRow(label1, v1, label2, v2) {
+          doc.rect(leftX, y, half, rowHeight).stroke();
+          doc.rect(leftX + half, y, half, rowHeight).stroke();
+
+          doc.font("Helvetica-Bold").text(label1, leftX + 8, y + 8);
+          doc.font("Helvetica").text(String(v1 || ""), leftX + 8, y + 25);
+
+          doc.font("Helvetica-Bold").text(label2, leftX + half + 8, y + 8);
+          doc.font("Helvetica").text(String(v2 || ""), leftX + half + 8, y + 25);
+
+          y += rowHeight;
+        }
+
+        drawRow("Driver Name", data.driver_name, "Driver Contact No.", data.driver_contact_no);
+        drawRow("Driver DL No.", data.driver_dl_no, "DL Valid Till", data.dl_valid_till);
+        drawRow("DDT Date", data.ddt_date, "DDT Card", data.ddt_card_by);
+        drawRow("Driver Sign.", data.driver_sig, "Inspected By", data.inspected_by);
+
+        /*******************************
+         * SIGNATURE BLOCK
+         ******************************/
+        y += 20;
+
+        if (y + 160 > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+          y = doc.page.margins.top;
+        }
+
+        doc.rect(leftX, y, tableW, 160).stroke();
+
+        const leftColW = tableW * 0.45;
+
+        // row 1
+        doc.font("Helvetica-Bold").text("Prepared By :", leftX + 10, y + 10);
+        doc.rect(leftX + 10, y + 25, leftColW - 20, 25).stroke();
+        doc.font("Helvetica").text("Transport Incharge", leftX + leftColW + 20, y + 15);
+
+        // row 2
+        y += rowHeight;
+        doc.font("Helvetica-Bold").text("Approved By :", leftX + 10, y + 10);
+        doc.rect(leftX + 10, y + 25, leftColW - 20, 25).stroke();
+        doc.font("Helvetica").text("General Manager", leftX + leftColW + 20, y + 15);
+
+        // row 3
+        y += rowHeight;
+        doc.font("Helvetica").text("Revision Date : 29-08-2023", leftX + 10, y + 15);
+        doc.text("CLASSIFIED • CONFIDENTIAL • FOR INTERNAL USE ONLY",
+          leftX + leftColW + 20, y + 15);
+
+        /*******************************
+         * END PDF
+         ******************************/
         doc.end();
 
-        // after write finished commit transaction and respond
-        stream.on('finish', () => {
-          db.commit((commitErr) => {
-            if (commitErr) {
-              console.error('Commit error:', commitErr);
-              // attempt rollback (file already created) — remove created file if you want
+        stream.on("finish", () => {
+          db.commit((err) => {
+            if (err) {
               return db.rollback(() => {
-                return res.status(500).json({ message: 'Commit failed', error: commitErr });
+                res.status(500).json({ message: "Commit failed", error: err });
               });
             }
 
             const pdfUrl = `http://localhost:3456/inspection_pdfs/inspection_${insertId}.pdf`;
-            console.log('PDF saved:', pdfPath);
 
-            return res.json({
+            res.json({
               message: "Data saved and PDF generated!",
               id: insertId,
-              pdfUrl: pdfUrl
+              pdfUrl
             });
           });
         });
 
-        // capture stream errors
-        stream.on('error', (sErr) => {
-        console.error('Stream write error:', sErr);
+        stream.on("error", (err) => {
+          if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+          return db.rollback(() => {
+            res.status(500).json({
+              message: "PDF write failed. Rollback done.",
+              error: err
+            });
+          });
+        });
 
-        if (fs.existsSync(pdfPath)) {
-        try { fs.unlinkSync(pdfPath); } catch (e) {}
-        }
-
-  return db.rollback(() => {
-    return res.status(500).json({
-      message: '❌ PDF write failed. DB rollback successful.',
-      error: sErr
-    });
-  });
-});
-} catch (pdfErr) {
-        console.error('PDF generation error:', pdfErr);
-        // rollback DB insert
+      } catch (err) {
         return db.rollback(() => {
-          return res.status(500).json({ message: 'PDF generation failed', error: pdfErr });
+          res.status(500).json({ message: "PDF generation failed.", error: err });
         });
       }
     });
-  }); // end transaction
+  });
 });
+
 
 
 app.post('/spot-hired-vehicle', (req, res) => {
