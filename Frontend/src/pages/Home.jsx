@@ -24,6 +24,11 @@ function Home() {
           <p>For Spot Hired Vehicle</p>
         </div>
 
+        <div className="home-card" onClick={() => navigate("/vehicle_inspection-dedicated")}>
+          <h3>Vehicle Inspection Checklist - Dedicated</h3>
+          <p>For Spot Hired Vehicle</p>
+        </div>
+
         <div className="home-card" onClick={() => navigate("/reports")}>
           <h3>REPORTS & RECORDS</h3>
           <p>View inspection data</p>
@@ -31,7 +36,7 @@ function Home() {
       </div>
 
       <footer className="home-footer">
-        <p>Prepared by: Safety Team | Classified: Internal Use Only</p>
+        <p>Developed by: IT Department | Classified: Internal Use Only</p>
         <p>© 2025 BAIL - All Rights Reserved</p>
       </footer>
     </div>

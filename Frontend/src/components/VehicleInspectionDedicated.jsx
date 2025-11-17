@@ -19,9 +19,17 @@ const checklistItems = [
   { key: 'first_aid_kit', label: 'Basic First aid Kit' },
   { key: 'fire_extinguisher', label: 'Fire Extinguisher' },
   { key: 'reflective_tape', label: 'Reflective Tape & Breakdown Safety Triangle' },
-  { key: 'rupd_supd', label: 'RUPD and SUPD (Rear and Side Under Protection Device)' },
+  { key: 'rupd', label: 'RUPD (Rear Under Protection Device)' },
+  { key: 'supd', label: 'SUPD (Side Under Protection Device)' },
   { key: 'seat_belt', label: 'Seat Belt (Both Side)' },
+  { key: 'gps_device', label: 'GPS Device' },
+  { key: 'speed_governor', label: 'Speed Governor (Speed Controller)' },
   { key: 'brake_condition', label: 'Brake Condition, Hand Brake or Wheel Chocks' },
+//   { key: 'rear_sensor_Rear_camera', label: 'Rear Sensor & Rear Camera' },
+  { key: 'steering_condition', label: 'Steering Wheel Looseness, Damage' },
+  { key: 'products_stored', label: 'Products Stored Securely' },
+  { key: 'walk_around', label: '360 Degree Walk Around' },
+  { key: 'empty_bucket', label: 'Other (Empty Bucket For Spillage Control)' }
 ];
 
 const schema = yup.object().shape({
@@ -39,7 +47,7 @@ const schema = yup.object().shape({
   driver_declaration: yup.bool().oneOf([true], 'Required')
 });
 
-function SpotHiredVehicleForm() {
+function VehicleInspectionDedicated() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -78,7 +86,7 @@ function SpotHiredVehicleForm() {
         inspected_by: data.inspected_by
       };
 
-      const res = await fetch('http://localhost:3456/spot-hired-vehicle', {
+      const res = await fetch('http://localhost:3456/dedicated_vehicle-inspection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -101,8 +109,8 @@ function SpotHiredVehicleForm() {
     <div className="container py-4" style={{ border: '1.5px solid black' }}>
       <div className="text-center mb-3">
         <h4>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata (Mathura)</h4>
-        <small>Revision No. 02 | BAIL-S-155-01-01-00-10</small>
-        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST - Spot Hired Vehicle</h5>
+        <small>Revision No. 02 | BAIL-S-155-01-01-00-07</small>
+        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST - Dedicated</h5>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -111,27 +119,27 @@ function SpotHiredVehicleForm() {
           <tbody>
             <tr>
               <td>Docket No.</td>
-              <td><input className="form-control" {...register('docket_no')} /></td>
+              <td><textarea className="form-control" {...register('docket_no')} /></td>
               <td>DMC In Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} /></td>
             </tr>
             <tr>
               <td>Truck Number</td>
-              <td><input className="form-control" {...register('truck_number')} /></td>
+              <td><textarea className="form-control" {...register('truck_number')} /></td>
               <td>DMC Out Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} /></td>
             </tr>
             <tr>
               <td>Vehicle Type</td>
-              <td><input className="form-control" {...register('vehicle_type')} /></td>
+              <td><textarea className="form-control" {...register('vehicle_type')} /></td>
               <td>Driver Safety Induction</td>
-              <td><input className="form-control" {...register('driver_safety_induction')} /></td>
+              <td><textarea className="form-control" {...register('driver_safety_induction')} /></td>
             </tr>
             <tr>
               <td>Transporter</td>
-              <td><input className="form-control" {...register('transporter')} /></td>
+              <td><textarea className="form-control" {...register('transporter')} /></td>
               <td>Driver Counselling</td>
-              <td><input className="form-control" {...register('driver_counselling')} /></td>
+              <td><textarea className="form-control" {...register('driver_counselling')} /></td>
             </tr>
           </tbody>
         </table>
@@ -161,7 +169,7 @@ function SpotHiredVehicleForm() {
                   {errors.checklist?.[i]?.response && <small className="text-danger">Required</small>}
                 </td>
                 <td>
-                  <input className="form-control" {...register(`checklist.${i}.remark`)} />
+                  <textarea className="form-control" {...register(`checklist.${i}.remark`)} />
                 </td>
               </tr>
             ))}
@@ -179,17 +187,17 @@ function SpotHiredVehicleForm() {
         </div>
 
         {/* Signatures */}
-        <table className="table table-bordered" style={{ border: '2px solid black' }}>
+        <table className=" w-full table table-bordered" style={{ border: '2px solid black' }}>
           <tbody>
             <tr>
               <td>Driver Name</td>
-              <td><input className="form-control" {...register('driver_name')} /></td>
+              <td><textarea className="form-control" {...register('driver_name')} /></td>
               <td>Driver Contact No.</td>
-              <td><input className="form-control" {...register('driver_contact_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_contact_no')} /></td>
             </tr>
             <tr>
               <td>Driver DL No.</td>
-              <td><input className="form-control" {...register('driver_dl_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_dl_no')} /></td>
               <td>DL Valid Till</td>
               <td><input type="date" className="form-control" {...register('dl_valid_till')} /></td>
             </tr>
@@ -197,18 +205,21 @@ function SpotHiredVehicleForm() {
               <td>DDT Date</td>
               <td><input type="date" className="form-control" {...register('ddt_date')} /></td>
               <td>DDT Card</td>
-              <td><input className="form-control" {...register('ddt_card_by')} /></td>
+              <td><textarea className="form-control" {...register('ddt_card_by')} /></td>
             </tr>
             <tr>
               <td>Driver Sign.</td>
-              <td><input className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
+              <td><textarea className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
               <td>Inspected By</td>
-              <td><input className="form-control" {...register('inspected_by')} /></td>
+              <td><textarea className="form-control" {...register('inspected_by')} /></td>
             </tr>
           </tbody>
         </table>
-
-        <table className="table table-bordered w-100" style={{ border: "2px solid black" }}>
+        <table className="w-full border border-black border-collapse">
+  <tbody>
+  </tbody>
+</table>
+<table className="table table-bordered w-100" style={{ border: "2px solid black" }}>
   <tbody>
     <tr>
       {/* LEFT CELL */}
@@ -222,7 +233,7 @@ function SpotHiredVehicleForm() {
 
       {/* RIGHT CELL */}
       <td style={{ width: "50%" }}>
-        <p>Safetey Team</p>
+        <p>Transport Incharge</p>
       </td>
     </tr>
 
@@ -236,7 +247,7 @@ function SpotHiredVehicleForm() {
       </td>
 
       <td>
-        <p>Safety Manager</p>
+        <p>General Manager</p>
       </td>
     </tr>
 
@@ -256,6 +267,7 @@ function SpotHiredVehicleForm() {
   </tbody>
 </table>
 
+            
 
         <div className="text-center my-3">
           <button type="submit" className="btn btn-primary me-2">Submit</button>
@@ -266,4 +278,4 @@ function SpotHiredVehicleForm() {
   );
 }
 
-export default SpotHiredVehicleForm;
+export default VehicleInspectionDedicated;

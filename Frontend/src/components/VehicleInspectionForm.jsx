@@ -110,7 +110,7 @@ function VehicleInspectionForm() {
       <div className="text-center mb-3">
         <h4>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata (Mathura)</h4>
         <small>Revision No. 02 | BAIL-S-155-01-01-00-07</small>
-        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST - Dedicated</h5>
+        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST</h5>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -254,10 +254,7 @@ function VehicleInspectionForm() {
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
         <p>Revision Date :</p>
-        <input style={{width:"20rem"}}
-          type="date"
-          className="form-control mt-1"
-        />
+        <p>29-08-2023</p>
       </td>
 
       <td>
@@ -270,7 +267,7 @@ function VehicleInspectionForm() {
             
 
         <div className="text-center my-3">
-          <button type="submit" className="btn btn-primary me-2">Submit</button>
+          <button type="submit" className="btn btn-primary me-2">Submit & Save PDF</button>
           <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button>
         </div>
       </form>
