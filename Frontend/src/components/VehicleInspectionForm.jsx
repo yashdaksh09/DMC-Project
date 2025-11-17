@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
+
 const checklistItems = [
   { key: 'vehicle_documents', label: 'Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)' },
   { key: 'driver_fit_dl', label: 'Driver Fit for Working & Their DL' },
@@ -48,6 +49,8 @@ const schema = yup.object().shape({
 });
 
 function VehicleInspectionForm() {
+  const pdfOpened = React.useRef(false);
+  const isSubmitting = React.useRef(false);// only add one time data entry in database
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -57,6 +60,10 @@ function VehicleInspectionForm() {
   });
 
   const onSubmit = async (data) => {
+    if (isSubmitting.current) return;  
+    isSubmitting.current = true;
+
+    
     try {
       // convert checklist array into object key-value pairs for database
       const checklistData = {};
@@ -95,6 +102,16 @@ function VehicleInspectionForm() {
       const result = await res.json();
       if (res.ok) {
         alert('✅ Form submitted successfully!');
+
+          if (result.pdfUrl && !pdfOpened.current) {
+            pdfOpened.current=true;
+          const link = document.createElement('a');
+          link.href = result.pdfUrl;
+          link.download = `inspection_${result.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          }
         reset();
       } else {
         alert(`⚠️ Submission failed: ${result.message}`);
@@ -103,6 +120,8 @@ function VehicleInspectionForm() {
       console.error(err);
       alert('❌ Network error.');
     }
+    isSubmitting.current = false;
+
   };
 
   return (
