@@ -2,6 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import BetaBadge from '../../BetaBadge';
 
 
 const checklistItems = [
@@ -127,6 +128,9 @@ function VehicleInspectionForm() {
   };
 
   return (
+   <>
+   <BetaBadge/>
+   
     <div className="container py-4" style={{ border: '1.5px solid black' }}>
       <div className="text-center mb-3">
         <h4>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata (Mathura)</h4>
@@ -285,6 +289,7 @@ function VehicleInspectionForm() {
         </div>
       </form>
     </div>
+    </> 
   );
 }
 
