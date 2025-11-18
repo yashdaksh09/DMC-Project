@@ -4,7 +4,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import BetaBadge from '../../BetaBadge';
 
-
 const checklistItems = [
   { key: 'vehicle_documents', label: 'Vehicle Documents (Insurance, PUC, RC, Tax, Fitness & Permit)' },
   { key: 'driver_fit_dl', label: 'Driver Fit for Working & Their DL' },
@@ -21,20 +20,11 @@ const checklistItems = [
   { key: 'first_aid_kit', label: 'Basic First aid Kit' },
   { key: 'fire_extinguisher', label: 'Fire Extinguisher' },
   { key: 'reflective_tape', label: 'Reflective Tape & Breakdown Safety Triangle' },
-  { key: 'rupd', label: 'RUPD (Rear Under Protection Device)' },
-  { key: 'supd', label: 'SUPD (Side Under Protection Device)' },
+  { key: 'rupd_supd', label: 'RUPD and SUPD (Rear and Side Under Protection Device)' },
   { key: 'seat_belt', label: 'Seat Belt (Both Side)' },
-  { key: 'gps_device', label: 'GPS Device' },
-  { key: 'speed_governor', label: 'Speed Governor (Speed Controller)' },
   { key: 'brake_condition', label: 'Brake Condition, Hand Brake or Wheel Chocks' },
-  { key: 'rear_sensor_Rear_camera', label: 'Rear Sensor & Rear Camera' },
-  { key: 'steering_condition', label: 'Steering Wheel Looseness, Damage' },
-  { key: 'products_stored', label: 'Products Stored Securely' },
-  { key: 'walk_around', label: '360 Degree Walk Around' },
-  { key: 'empty_bucket', label: 'Other (Empty Bucket For Spillage Control)' }
 ];
 
-//Error validation Required Field
 const schema = yup.object().shape({
   docket_no: yup.string().required('Required'),
   truck_number: yup.string().required('Required'),
@@ -47,6 +37,7 @@ const schema = yup.object().shape({
       remark: yup.string()
     })
   ),
+  driver_declaration: yup.bool().oneOf([true], 'Required'),
   driver_name: yup.string().trim().required('Driver name required'),
   driver_contact_no: yup.string().trim().required('Driver contact no required'),
   driver_dl_no: yup.string().trim().required('Driver DL no required'),
@@ -55,12 +46,11 @@ const schema = yup.object().shape({
   ddt_card_by: yup.string().trim().nullable(),
   driver_sig: yup.string().trim().required('Driver signature required'),
   inspected_by: yup.string().trim().required('Inspected by required'),
-  driver_declaration: yup.bool().oneOf([true], 'Required')
 });
 
-function VehicleInspectionForm() {
-  const pdfOpened = React.useRef(false);
-  const isSubmitting = React.useRef(false);// only add one time data entry in database reasonL- user not submit again and again
+function SpotRm_PM_Form() {
+  const pdfOpened= React.useRef(false);
+  const isSubmitting= React.useRef(false); // only add one time entry reason:-  user not submit again and again
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -70,10 +60,9 @@ function VehicleInspectionForm() {
   });
 
   const onSubmit = async (data) => {
-    if (isSubmitting.current) return;  
-    isSubmitting.current = true;
-
-    
+    if(isSubmitting.current){
+      return isSubmitting.current= true;
+    }
     try {
       // convert checklist array into object key-value pairs for database
       const checklistData = {};
@@ -103,7 +92,7 @@ function VehicleInspectionForm() {
         inspected_by: data.inspected_by
       };
 
-      const res = await fetch('http://localhost:3456/submit-inspection', {
+      const res = await fetch('http://localhost:3456/spot-rm-pm', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -112,12 +101,11 @@ function VehicleInspectionForm() {
       const result = await res.json();
       if (res.ok) {
         alert('✅ Form submitted successfully!');
-
-          if (result.pdfUrl && !pdfOpened.current) {
+        if (result.pdfUrl && !pdfOpened.current) {
             pdfOpened.current=true;
           const link = document.createElement('a');
           link.href = result.pdfUrl;
-          link.download = `OwnVehicle_inspection__${result.id}.pdf`;
+          link.download = `Spot-Hired-Vehicle_inspection_${result.id}.pdf`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -130,21 +118,20 @@ function VehicleInspectionForm() {
       console.error(err);
       alert('❌ Network error.');
     }
-    finally {
-  isSubmitting.current = false; //flag reset code line reason:-  // finally feature always run try or catch run or not but finally always execute
-}
-
+    finally{ // finally feature work always run try or catch run or not but finally always execute
+      isSubmitting.current= false
+    }
   };
 
   return (
-   <>
-   <BetaBadge/>
-   
+    <>
+    <BetaBadge/>
+    
     <div className="container py-4" style={{ border: '1.5px solid black' }}>
       <div className="text-center mb-3">
         <h4>BRINDAVAN AGRO INDUSTRIES PRIVATE LIMITED, Chhata (Mathura)</h4>
-        <small>Revision No. 02 | BAIL-S-155-01-01-00-07</small>
-        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST</h5>
+        <small>Revision No. 02 | BAIL-S-155-01-01-00-10</small>
+        <h5 className="mt-3">VEHICLE INSPECTION CHECKLIST - Spot RM PM</h5>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -154,36 +141,36 @@ function VehicleInspectionForm() {
             <tr>
               <td>Docket No.</td>
               <td><textarea className="form-control" {...register('docket_no')} />
-               {errors.docket_no && <small className="text-danger d-block">Required</small>}</td>
+              {errors.docket_no && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>DMC In Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} />
-               {errors.dmc_in_datetime && <small className="text-danger d-block">Required</small>}
+              {errors.dmc_in_datetime && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
             <tr>
               <td>Truck Number</td>
               <td><textarea className="form-control" {...register('truck_number')} />
-               {errors.truck_number && <small className="text-danger d-block">Required</small>}
+              {errors.truck_number && <small className="text-danger d-block">Required</small>}
               </td>
               <td>DMC Out Date & Time</td>
               <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} />
-               {errors.dmc_out_datetime && <small className="text-danger d-block">Required</small>}
+              {errors.dmc_out_datetime && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
             <tr>
               <td>Vehicle Type</td>
               <td><textarea className="form-control" {...register('vehicle_type')} />
-               {errors.vehicle_type && <small className="text-danger d-block">Required</small>}
+              {errors.vehicle_type && <small className="text-danger d-block">Required</small>}
               </td>
               <td>Driver Safety Induction</td>
               <td><textarea className="form-control" {...register('driver_safety_induction')} />
-               {errors.driver_safety_induction && <small className="text-danger d-block">Required</small>}
+              {errors.driver_safety_induction && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
             <tr>
               <td>Transporter</td>
-              <td><textarea className="form-control" {...register('transporter')} />
-              </td>
+              <td><textarea className="form-control" {...register('transporter')} /></td>
               <td>Driver Counselling</td>
               <td><textarea className="form-control" {...register('driver_counselling')} /></td>
             </tr>
@@ -233,25 +220,23 @@ function VehicleInspectionForm() {
         </div>
 
         {/* Signatures */}
-        <table className=" w-full table table-bordered" style={{ border: '2px solid black' }}>
+        <table className="table table-bordered" style={{ border: '2px solid black' }}>
           <tbody>
             <tr>
               <td>Driver Name</td>
               <td><textarea className="form-control" {...register('driver_name')} />
               {errors.driver_name && <small className="text-danger d-block">Required</small>}
               </td>
-              
               <td>Driver Contact No.</td>
               <td><textarea className="form-control" {...register('driver_contact_no')} />
-               {errors.driver_contact_no && <small className="text-danger d-block">Required</small>}
+              {errors.driver_contact_no && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
             <tr>
               <td>Driver DL No.</td>
               <td><textarea className="form-control" {...register('driver_dl_no')} />
-            {errors.driver_dl_no && <small className="text-danger d-block">Required</small>}
+              {errors.driver_dl_no && <small className="text-danger d-block">Required</small>}
               </td>
-             
               <td>DL Valid Till</td>
               <td><input type="date" className="form-control" {...register('dl_valid_till')} />
               {errors.dl_valid_till && <small className="text-danger d-block">Required</small>}
@@ -260,11 +245,11 @@ function VehicleInspectionForm() {
             <tr>
               <td>DDT Date</td>
               <td><input type="date" className="form-control" {...register('ddt_date')} />
-               {errors.ddt_date && <small className="text-danger d-block">Required</small>}
+              {errors.ddt_date && <small className="text-danger d-block">Required</small>}
               </td>
               <td>DDT Card</td>
               <td><textarea className="form-control" {...register('ddt_card_by')} />
-               {errors.ddt_card_by && <small className="text-danger d-block">Required</small>}
+              {errors.ddt_card_by && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
             <tr>
@@ -274,43 +259,40 @@ function VehicleInspectionForm() {
               </td>
               <td>Inspected By</td>
               <td><textarea className="form-control" {...register('inspected_by')} />
-               {errors.inspected_by&& <small className="text-danger d-block">Required</small>}
+              {errors.inspected_by && <small className="text-danger d-block">Required</small>}
               </td>
             </tr>
           </tbody>
         </table>
-        <table className="w-full border border-black border-collapse">
-  <tbody>
-  </tbody>
-</table>
-<table className="table table-bordered w-100" style={{ border: "2px solid black" }}>
+
+        <table className="table table-bordered w-100" style={{ border: "2px solid black" }}>
   <tbody>
     <tr>
       {/* LEFT CELL */}
       <td style={{ width: "30%", textAlign: "left" }}>
-        <p >Prepared By :</p>
+        <p >Prepared By</p>
       </td>
 
       {/* RIGHT CELL */}
       <td style={{ width: "50%" }}>
-        <p>Transport Incharge</p>
+        <p>Safetey Team</p>
       </td>
     </tr>
 
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
-        <p>Approved By :</p>
+        <p>Approved By</p>
       </td>
 
       <td>
-        <p>General Manager</p>
+        <p>Safety Manager</p>
       </td>
     </tr>
 
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
         <p>Revision Date :</p>
-        <p>29-08-2023</p>
+        <p>28-10-2024</p>
       </td>
 
       <td>
@@ -320,17 +302,16 @@ function VehicleInspectionForm() {
   </tbody>
 </table>
 
-            
 
         <div className="text-center my-3">
-          <button type="submit" className="btn btn-primary me-2">Submit & Save PDF</button>
+          <button type="submit" className="btn btn-primary me-2">Submit & Save</button>
           {/* <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button> */}
           <button type="button" className="btn btn-secondary">Save as Draft</button>
         </div>
       </form>
     </div>
-    </> 
+    </>
   );
 }
 
-export default VehicleInspectionForm;
+export default SpotRm_PM_Form;

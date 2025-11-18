@@ -45,7 +45,15 @@ const schema = yup.object().shape({
       remark: yup.string()
     })
   ),
-  driver_declaration: yup.bool().oneOf([true], 'Required')
+  driver_declaration: yup.bool().oneOf([true], 'Required'),
+  driver_name: yup.string().trim().required('Driver name required'),
+  driver_contact_no: yup.string().trim().required('Driver contact no required'),
+  driver_dl_no: yup.string().trim().required('Driver DL no required'),
+  dl_valid_till: yup.string().required('DL valid till required'),
+  ddt_date: yup.string().required('DDT date required'),
+  ddt_card_by: yup.string().trim().nullable(),
+  driver_sig: yup.string().trim().required('Driver signature required'),
+  inspected_by: yup.string().trim().required('Inspected by required'),
 });
 
 function VehicleInspectionDedicated() {
@@ -142,21 +150,33 @@ function VehicleInspectionDedicated() {
           <tbody>
             <tr>
               <td>Docket No.</td>
-              <td><textarea className="form-control" {...register('docket_no')} /></td>
+              <td><textarea className="form-control" {...register('docket_no')} />
+              {errors.docket_no && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>DMC In Date & Time</td>
-              <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} /></td>
+              <td><input type="datetime-local" className="form-control" {...register('dmc_in_datetime')} />
+              {errors.dmc_in_datetime && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
             <tr>
               <td>Truck Number</td>
-              <td><textarea className="form-control" {...register('truck_number')} /></td>
+              <td><textarea className="form-control" {...register('truck_number')} />
+              {errors.truck_number && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>DMC Out Date & Time</td>
-              <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} /></td>
+              <td><input type="datetime-local" className="form-control" {...register('dmc_out_datetime')} />
+              {errors.dmc_out_datetime && <small className="text-danger d-block">Required</small>}
+              </td>ś
             </tr>
             <tr>
               <td>Vehicle Type</td>
-              <td><textarea className="form-control" {...register('vehicle_type')} /></td>
+              <td><textarea className="form-control" {...register('vehicle_type')} />
+              {errors.vehicle_type && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>Driver Safety Induction</td>
-              <td><textarea className="form-control" {...register('driver_safety_induction')} /></td>
+              <td><textarea className="form-control" {...register('driver_safety_induction')} />
+              {errors.driver_safety_induction && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
             <tr>
               <td>Transporter</td>
@@ -214,27 +234,43 @@ function VehicleInspectionDedicated() {
           <tbody>
             <tr>
               <td>Driver Name</td>
-              <td><textarea className="form-control" {...register('driver_name')} /></td>
+              <td><textarea className="form-control" {...register('driver_name')} />
+              {errors.driver_name && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>Driver Contact No.</td>
-              <td><textarea className="form-control" {...register('driver_contact_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_contact_no')} />
+              {errors.driver_contact_no && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
             <tr>
               <td>Driver DL No.</td>
-              <td><textarea className="form-control" {...register('driver_dl_no')} /></td>
+              <td><textarea className="form-control" {...register('driver_dl_no')} />
+              {errors.driver_dl_no && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>DL Valid Till</td>
-              <td><input type="date" className="form-control" {...register('dl_valid_till')} /></td>
+              <td><input type="date" className="form-control" {...register('dl_valid_till')} />
+              {errors.dl_valid_till && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
             <tr>
               <td>DDT Date</td>
-              <td><input type="date" className="form-control" {...register('ddt_date')} /></td>
+              <td><input type="date" className="form-control" {...register('ddt_date')} />
+              {errors.ddt_date && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>DDT Card</td>
-              <td><textarea className="form-control" {...register('ddt_card_by')} /></td>
+              <td><textarea className="form-control" {...register('ddt_card_by')} />
+              {errors.ddt_card_by && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
             <tr>
               <td>Driver Sign.</td>
-              <td><textarea className="form-control" placeholder="Name as signature" {...register('driver_sig')} /></td>
+              <td><textarea className="form-control" placeholder="Name as signature" {...register('driver_sig')} />
+              {errors.driver_sig && <small className="text-danger d-block">Required</small>}
+              </td>
               <td>Inspected By</td>
-              <td><textarea className="form-control" {...register('inspected_by')} /></td>
+              <td><textarea className="form-control" {...register('inspected_by')} />
+              {errors.inspected_by && <small className="text-danger d-block">Required</small>}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -248,10 +284,6 @@ function VehicleInspectionDedicated() {
       {/* LEFT CELL */}
       <td style={{ width: "30%", textAlign: "left" }}>
         <p >Prepared By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
       </td>
 
       {/* RIGHT CELL */}
@@ -263,10 +295,6 @@ function VehicleInspectionDedicated() {
     <tr>
       <td style={{ width: "30%", textAlign: "left" }}>
         <p>Approved By :</p>
-        <textarea style={{width:"20rem"}}
-          type="text"
-          className="form-control mt-1"
-        />
       </td>
 
       <td>
@@ -294,7 +322,8 @@ function VehicleInspectionDedicated() {
 
         <div className="text-center my-3">
           <button type="submit" className="btn btn-primary me-2">Submit & Save</button>
-          <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button>
+          {/* <button type="button" className="btn btn-secondary" onClick={() => window.print()}>Print</button> */}
+          <button type="button" className="btn btn-secondary">Save as Draft</button>
         </div>
       </form>
     </div>
